@@ -1,0 +1,16 @@
+# Changelog - Script de Mantenimiento Arch Linux
+
+## [2.1] - 2025-06-05
+### Mejoras
+- Protección contra errores al limpiar /tmp y /var/tmp.
+- Evita fallos si no hay paquetes huérfanos (`pacman -Qtdq`).
+- Comprueba si `paccache` está instalado antes de usarlo.
+- Resumen final más limpio usando variables.
+
+## [2.0] - (fecha anterior)
+- Estructura modular y menú interactivo.
+- Registro detallado en archivo de log.
+- Soporte para actualización AUR con `yay`.
+- Función de reparación automática tras errores.
+
+---
