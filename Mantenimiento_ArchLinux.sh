@@ -45,10 +45,15 @@ ejecutar() {
 limpieza_basica() {
     echo -e "${magenta}${negrita}[ FASE 1 ] LIMPIEZA DEL SISTEMA${reset}"
     ejecutar "Limpiando logs del journal (mayores a 3 días)" "sudo journalctl --vacuum-time=3d"
-    ejecutar "Eliminando paquetes huérfanos" "sudo pacman -Rns \$(pacman -Qtdq) --noconfirm"
+    if pacman -Qtdq >/dev/null 2>&1; then
+        ejecutar "Eliminando paquetes huérfanos" "sudo pacman -Rns \$(pacman -Qtdq) --noconfirm"
+    else
+        echo -e "${amarillo}  No hay paquetes huérfanos para eliminar.${reset}"
+    fi
     ejecutar "Limpiando caché de paquetes" "sudo pacman -Scc --noconfirm"
     ejecutar "Limpiando caché de usuario" "rm -rf ~/.cache/* ~/.thumbnails/*"
-    ejecutar "Limpiando archivos temporales" "sudo rm -rf /tmp/* /var/tmp/*"
+    [ -d /tmp ] && ejecutar "Limpiando archivos temporales" "sudo rm -rf /tmp/*"
+    [ -d /var/tmp ] && ejecutar "Limpiando archivos temporales" "sudo rm -rf /var/tmp/*"
 }
 
 optimizacion_sistema() {
@@ -58,7 +63,11 @@ optimizacion_sistema() {
     if command -v yay >/dev/null; then
         ejecutar "Actualizando AUR (yay)" "yay -Sua --noconfirm"
     fi
-    ejecutar "Limpiando versiones antiguas" "paccache -rk1"
+    if command -v paccache >/dev/null; then
+        ejecutar "Limpiando versiones antiguas" "paccache -rk1"
+    else
+        echo -e "${amarillo}  'paccache' no está instalado.${reset}"
+    fi
     ejecutar "Verificando archivos corruptos" "sudo pacman -Qkkq" "sudo pacman -S --noconfirm \$(pacman -Qkkq | awk '{print \$1}')"
 }
 
@@ -75,12 +84,12 @@ resumen_final() {
     echo -e "${blanco}${negrita}            INFORME FINAL DE MANTENIMIENTO            ${reset}"
     echo -e "${verde}${negrita}══════════════════════════════════════════════════${reset}"
     echo -e "${cian}► RESUMEN ESTADÍSTICO:${reset}"
-    echo -e "${blanco}  - Espacio en disco:${reset}"
-    df -h / | tail -1 | awk '{print "    " $3 " usados de " $2 " (" $5 ")"}'
-    echo -e "${blanco}  - Memoria libre:${reset}"
-    free -h | awk '/Mem/{print "    " $4 " libres de " $2}'
-    echo -e "${blanco}  - Paquetes instalados:${reset}"
-    pacman -Q | wc -l | awk '{print "    " $1 " paquetes"}'
+    uso_disco=$(df -h / | tail -1 | awk '{print $3 " usados de " $2 " (" $5 ")"}')
+    mem_libre=$(free -h | awk '/Mem/ {print $4 " libres de " $2}')
+    paquetes=$(pacman -Q | wc -l)
+    echo -e "${blanco}  - Espacio en disco:    ${uso_disco}${reset}"
+    echo -e "${blanco}  - Memoria libre:       ${mem_libre}${reset}"
+    echo -e "${blanco}  - Paquetes instalados: ${paquetes}${reset}"
     echo -e "${verde}${negrita}\n══════════════════════════════════════════════════${reset}"
     echo -e "${blanco}${negrita}✅ MANTENIMIENTO COMPLETADO ✅${reset}"
     echo -e "${verde}${negrita}══════════════════════════════════════════════════${reset}"
